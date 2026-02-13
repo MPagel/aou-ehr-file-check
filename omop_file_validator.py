@@ -41,7 +41,7 @@ VALID_TIMESTAMP_FORMAT = [
     '%Y-%m-%dT%H:%M:%S.%f%z'
 ]
 
-SCIENTIFIC_NOTATION_REGEX = "^(?:-?\d*)\.?\d+[eE][-\+]?\d+$"
+SCIENTIFIC_NOTATION_REGEX = r"^(?:-?\d*)\.?\d+[eE][-\+]?\d+$"
 
 csv.register_dialect('load',
                      quotechar='"',
@@ -512,7 +512,7 @@ def run_csv_checks(file_path, f, restrict=None):
                          sep=',',
                          na_values=['', ' ', '.'],
                          parse_dates=False,
-                         infer_datetime_format=False,
+                         # infer_datetime_format=False,
                          nrows=restrict,
                          dtype={
                              col: object
@@ -563,7 +563,7 @@ def run_csv_checks(file_path, f, restrict=None):
                                 fmts = VALID_TIMESTAMP_FORMAT
                                 err_msg = MSG_INVALID_TIMESTAMP
 
-                            for idx, value in df[submission_column].iteritems(
+                            for idx, value in df[submission_column].items(
                             ):
                                 if not any(
                                         list(
@@ -906,7 +906,7 @@ def evaluate_submission(d, restrict=None):
 
         if len(rows) > 0:
             df_file = pd.DataFrame(rows, columns=readable_field_names)
-            df = df.append(df_file, ignore_index=True)
+            df = pd.concat([df,df_file], ignore_index=True)
 
         error_map[file_name] = result['errors']
     df.to_csv(output_file_name, index=False, quoting=csv.QUOTE_ALL)
