@@ -869,13 +869,19 @@ def get_files(base_path, extensions):
     return files
 
 
-def evaluate_submission(d, restrict=None):
+def evaluate_submission(d, restrict=None, write_dir=""):
     """Entry point for evaluating all files in a submission
 
     :param str d: Path to the submission directory
     :return dict: Dictionary of found errors
     """
-    out_dir = os.path.join(d, 'errors')
+    if write_dir is None:
+        write_dir = d
+    elif write_dir.startswith("/"):
+        pass
+    else:
+        write_dir = os.path.join(os.getcwd(),write_dir)
+    out_dir = os.path.join(write_dir, 'errors')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
@@ -913,7 +919,7 @@ def evaluate_submission(d, restrict=None):
             df = pd.concat([df,df_file], ignore_index=True)
         else:
             print("No errors encountered in this file")
-        print("")
+        print("__________________")
         sys.stdout.flush()  # ensure frequent updates so file pointer within foundry doesn't "time out"
         
         error_map[file_name] = result['errors']
@@ -945,4 +951,4 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    evaluate_submission(settings.csv_dir, restrict=args.restrict)
+    evaluate_submission(settings.csv_dir, restrict=args.restrict, write_dir=None)
