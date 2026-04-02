@@ -13,6 +13,7 @@ import collections
 import re
 from pathlib import Path
 import argparse
+import sys
 
 RESULT_SUCCESS = 'success'
 MSG_CANNOT_PARSE_FILENAME = 'Cannot parse filename'
@@ -345,18 +346,19 @@ def check_csv_format(f, column_names, restrict=None):
             if restrict and idx - 1 > restrict:
                 break
 
-            for field in line:
+            for i2, field in enumerate(line):
                 if '\n' in field:
-                    newline_msg = 'Newline character found on line %s: %s\n' \
-                                  'Please replace newline "\\n" characters with space " "' % (str(idx), line)
-                    print(newline_msg)
+                    newline_msg = f'Newline character found on line {str(idx)} in field {column_names[i2]}\n' \
+                                  f'Please replace newline "\\n" characters with e.g. space " "'
+                    # print(newline_msg)
                     results.append([newline_msg, None, None])
                     break
             if len(line) != len(column_names):
-                column_mismatch_msg = 'Incorrect number of columns on line %s: %s' % (
-                    str(idx), line)
+                column_mismatch_msg = f'Incorrect number of columns on line {str(idx)}\n' \
+                                      f'Expected {len(column_names)}, found {len(line)}'
                 results.append([column_mismatch_msg, None, None])
                 break
+        print(f'total line count: {idx} including header')
     except (ValueError, csv.Error):
         print(traceback.format_exc())
         if not line:
@@ -895,6 +897,7 @@ def evaluate_submission(d, restrict=None):
         file_name = f.name
 
         result = process_file(f, restrict=restrict)
+        
         rows = []
         for error in result['errors']:
             row = []
@@ -903,11 +906,16 @@ def evaluate_submission(d, restrict=None):
             for error_key in ERROR_KEYS:
                 row.append(error.get(error_key))
             rows.append(row)
+            print(error)
 
         if len(rows) > 0:
             df_file = pd.DataFrame(rows, columns=readable_field_names)
             df = pd.concat([df,df_file], ignore_index=True)
-
+        else:
+            print("No errors encountered in this file")
+        print("")
+        sys.stdout.flush()  # ensure frequent updates so file pointer within foundry doesn't "time out"
+        
         error_map[file_name] = result['errors']
     df.to_csv(output_file_name, index=False, quoting=csv.QUOTE_ALL)
 
